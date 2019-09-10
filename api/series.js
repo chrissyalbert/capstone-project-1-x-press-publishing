@@ -21,8 +21,39 @@ seriesRouter.param('seriesId', (req, res, next, seriesId) => {
       req.series = series;
       next();
     } else {
-      res.sendstatus(404);
+      res.sendStatus(404);
     }
+  });
+});
+
+seriesRouter.get('/:seriesId', (req, res, next) => {
+  res.status(200).json({series: req.series});
+});
+
+seriesRouter.post('/', (req, res, next) => {
+  const name = req.body.series.name;
+  const description = req.body.series.description;
+  
+  if(!name || !description) {
+    return res.sendStatus(400);
+  }
+
+  const sql = 'INSERT INTO Series (name, description) VALUES ($name, $description)';
+  const values = {
+    $name: name,
+    $description: description
+  };
+
+  db.run(sql, values, function(error) {
+    if (error) {
+      next(error);
+    }
+    db.get(`SELECT * FROM Series WHERE id = ${this.lastID}`, (error, series) => {
+      if (error) {
+        next(error);
+      }
+      res.status(201).json({series: series});
+    });
   });
 });
 
