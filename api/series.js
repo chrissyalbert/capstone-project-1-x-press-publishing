@@ -1,5 +1,7 @@
 const express = require('express');
 const seriesRouter = express.Router();
+const issuesRouter = require('./issues');
+seriesRouter.use('/:seriesId/issues', issuesRouter);
 
 const sqlite3 = require('sqlite3');
 const db = new sqlite3.Database(process.env.TEST_DATABASE || './database.sqlite');
