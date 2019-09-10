@@ -63,4 +63,38 @@ artistsRouter.post('/', (req, res, next) => {
   });
 });
 
+artistsRouter.put('/:artistId', (req, res, next) => {
+  const name = req.body.artist.name;
+  const dateOfBirth = req.body.artist.dateOfBirth;
+  const biography = req.body.artist.biography;
+  const isCurrentlyEmployed = req.body.artist.isCurrentlyEmployed === 0 ? 0 : 1;
+  const artistId = req.params.artistId;
+
+  if (!name || !dateOfBirth || !biography) {
+    return res.sendStatus(400);
+  }
+
+  const sql = 'UPDATE Artist SET name = $name, date_of_birth = $dateOfBirth, biography = $biography, is_currently_employed = $isCurrentlyEmployed WHERE Artist.id = $artistId';
+  const values = { 
+    $name: name,
+    $dateOfBirth: dateOfBirth,
+    $biography: biography,
+    $isCurrentlyEmployed: isCurrentlyEmployed,
+    $artistId: artistId };
+    
+  db.run(sql, values, function(error) {
+    if (error) {
+      next(error);
+    }
+    db.get(`SELECT * FROM Artist WHERE id = ${artistId}`, (error, artist) => {
+      if (error) {
+        next(error);
+      } else {
+        res.status(200).json({artist: artist});
+      } 
+    });
+  }); 
+});
+
+
 module.exports = artistsRouter;
