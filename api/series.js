@@ -57,4 +57,32 @@ seriesRouter.post('/', (req, res, next) => {
   });
 });
 
+seriesRouter.put('/:seriesId', (req, res, next) => {
+  const name = req.body.series.name;
+  const description = req.body.series.description;
+
+  if (!name || !description) {
+    res.sendStatus(400);
+  }
+
+  const sql = 'UPDATE Series SET name = $name, description = $description WHERE id = $seriesId';
+  const values = {
+    $name: name,
+    $description: description,
+    $seriesId: req.params.seriesId
+  };
+
+  db.run(sql, values, function(error) {
+    if (error) {
+      next(error);
+    }
+    db.get(`SELECT * FROM Series WHERE id = ${req.params.seriesId}`, (error, series) => {
+      if (error) {
+        next(error);
+      }
+      res.status(200).json({series: series});
+    });
+  });
+});
+
 module.exports = seriesRouter;
