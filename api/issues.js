@@ -7,19 +7,20 @@ const db = new sqlite3.Database(process.env.TEST_DATABASE || './database.sqlite'
 issuesRouter.param('issueId', (req, res, next, issueId) => {
   const sql = 'SELECT * FROM Issue WHERE id = $issueId';
   const values = {$issueId: issueId};
-  db.get(sql,values, (error, issue) => {
+  db.get(sql, values, (error, issue) => {
     if (error) {
       next(error);
-    }
+    } 
     if (issue) {
       next();
+    } else {
+      res.sendStatus(404);
     }
-    res.sendStatus(404);
   });
 });
 
 issuesRouter.get('/', (req, res, next) => {
-  db.all('SELECT * FROM Issue', (error, issues) => {
+  db.all('SELECT * FROM Issue WHERE series_id = $seriesId', {$seriesId: req.params.seriesId}, (error, issues) => {
     if (error) {
       next(error);
     }
@@ -80,21 +81,36 @@ issuesRouter.put('/:issueId', (req, res, next) => {
       if (!name || !issueNumber || !publicationDate || !artist) {
         return res.sendStatus(400);
       } 
-      const sql = 'UPDATE Issue SET name = $name, issue_number = $issueNumber, publication_date = $publicationDate,  series_id = $seriesId WHERE artist_id = $artistId';
+      const sql = 'UPDATE Issue SET name = $name, issue_number = $issueNumber, publication_date = $publicationDate,  artist_id = $artistId WHERE id = $issueId';
       const values = {
         $name: name, 
         $issueNumber: issueNumber, 
         $publicationDate: publicationDate,  
-        $seriesId: req.params.seriesId,
-        $artistId: artistId
+        $artistId: artistId,
+        $issueId: req.params.issueId
       };
       db.run(sql, values, (error, series) => {
         if (error) {
           next(error);
         }
-        res.status(200).json({series: series});
+        db.get(`SELECT * FROM Issue WHERE Issue.id = ${req.params.issueId}`,
+        (error, issue) => {
+          if (error) {
+            next(error);
+          }
+          res.status(200).json({issue: issue});
+        });
       });
     }
+  });
+});
+
+issuesRouter.delete('/:issueId', (req, res, next) => {
+  db.run('DELETE FROM Issue WHERE id = $issueId', {$issueId: req.params.issueId}, (error) => {
+    if (error) {
+      next(error);
+    }
+    res.sendStatus(204);
   });
 });
 
