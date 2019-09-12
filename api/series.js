@@ -64,7 +64,7 @@ seriesRouter.put('/:seriesId', (req, res, next) => {
   const description = req.body.series.description;
 
   if (!name || !description) {
-    res.sendStatus(400);
+    return res.sendStatus(400);
   }
 
   const sql = 'UPDATE Series SET name = $name, description = $description WHERE id = $seriesId';
